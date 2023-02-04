@@ -44,6 +44,17 @@ You can add fingertip.el to the programming language mode like below:
                'swift-mode-hook
                'minibuffer-inactive-mode-hook
                'typescript-mode-hook
+               
+               'c-ts-mode-hook
+               'c++-ts-mode-hook
+               'cmake-ts-mode-hook
+               'toml-ts-mode-hook
+               'css-ts-mode-hook
+               'js-ts-mode-hook
+               'json-ts-mode-hook
+               'python-ts-mode-hook
+               'bash-ts-mode-hook
+               'typescript-ts-mode-hook
                ))
   (add-hook hook '(lambda () (fingertip-mode 1))))
 ```
