@@ -1078,7 +1078,7 @@ When in comment, kill to the beginning of the line."
                    (eolp)))
              (kill-line))))
 
-     ;; JavaScript string not identify by tree-sitter.
+     ;; JavaScript string not identify by `treesit'
      ;; We need use `fingertip-current-parse-state' test cursor
      ;; whether in string.
      ((and (eq (fingertip-node-type-at-point) 'raw_text)
