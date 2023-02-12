@@ -521,7 +521,7 @@ When in comment, kill to the beginning of the line."
 
      ;; Jump out string if in string.
      ((fingertip-in-string-p)
-      (goto-char (treesit-node-start current-node)))
+      (fingertip-jump-string-begin))
 
      ;; Jump to node start position if current node exist.
      ((> (length current-node-text) 0)
@@ -562,7 +562,7 @@ When in comment, kill to the beginning of the line."
 
      ;; Jump out string if in string.
      ((fingertip-in-string-p)
-      (goto-char (treesit-node-end current-node)))
+      (fingertip-jump-string-end))
 
      ;; Jump to node end position if current node exist.
      ((> (length current-node-text) 0)
@@ -573,6 +573,12 @@ When in comment, kill to the beginning of the line."
      ;; Otherwise, jump to end position of next node.
      (next-node
       (goto-char (treesit-node-end next-node))))))
+
+(defun fingertip-jump-string-begin ()
+  (goto-char (car (thing-at-point-bounds-of-string-at-point))))
+
+(defun fingertip-jump-string-end ()
+  (goto-char (cdr (thing-at-point-bounds-of-string-at-point))))
 
 (defun fingertip-delete-whitespace-around-cursor ()
   (fingertip-delete-region (save-excursion
