@@ -9,7 +9,7 @@
 ;; Version: 0.1
 ;; Last-Updated: 2023-02-04 14:04:10
 ;;           By: Andy Stewart
-;; URL: https://www.github.org/manateelazycat/fingertip
+;; URL: https://www.github.com/manateelazycat/fingertip
 ;; Keywords:
 ;; Compatibility: GNU Emacs 30.0.50
 ;;
