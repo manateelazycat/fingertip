@@ -1382,13 +1382,11 @@ A and B are strings."
     ;; Insert blank below at parentheses.
     (newline arg)
     (open-line 1)
+    (indent-according-to-mode)
     ;; Indent close parentheses line.
     (save-excursion
-      (fingertip-jump-left)
-      (fingertip-match-paren 1)
-      (indent-according-to-mode))
-    ;; Indent blank line.
-    (indent-according-to-mode))
+      (search-forward-regexp "\s*)\\|\s*}\\|\s*\\]" nil t)
+      (indent-according-to-mode)))
    ;; Newline and indent.
    (t
     (newline arg)
