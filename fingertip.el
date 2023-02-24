@@ -1346,7 +1346,8 @@ A and B are strings."
            (ignore-errors
              (save-excursion
                (backward-char 1)
-               (eq (fingertip-node-type-at-point) 'comment))))))
+               (eq (fingertip-node-type-at-point) 'comment))))
+      (nth 4 (fingertip-current-parse-state))))
 
 (defun fingertip-in-char-p (&optional argument)
   (let ((argument (or argument (point))))
