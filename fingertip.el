@@ -1300,16 +1300,16 @@ A and B are strings."
   (ignore-errors (treesit-node-type (treesit-node-at (point)))))
 
 (defun fingertip-in-string-p ()
-  (ignore-errors
-    (or
-     ;; If node type is 'string, point must at right of string open quote.
+  (or
+   ;; If node type is 'string, point must at right of string open quote.
+   (ignore-errors
      (let ((current-node (treesit-node-at (point))))
        (and (fingertip-is-string-node-p current-node)
-            (> (point) (treesit-node-start current-node))))
+            (> (point) (treesit-node-start current-node)))))
 
-     (nth 3 (fingertip-current-parse-state))
+   (nth 3 (fingertip-current-parse-state))
 
-     (fingertip-before-string-close-quote-p))))
+   (fingertip-before-string-close-quote-p)))
 
 (defun fingertip-in-single-quote-string-p ()
   (ignore-errors
