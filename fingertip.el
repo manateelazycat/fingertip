@@ -834,9 +834,16 @@ When in comment, kill to the beginning of the line."
                (fingertip-delete-region (treesit-node-start current-node) (treesit-node-end current-node)))
               ((string-equal current-node-bound-end "'''")
                (fingertip-delete-region (point) (- (treesit-node-end current-node) (length current-node-bound-end))))
+              ((fingertip-after-open-single-quote-p current-node)
+               (fingertip-kill-line-in-string))
               (t
                (fingertip-delete-region (point) (- (treesit-node-end current-node) 1)))))
     (fingertip-kill-line-in-string)))
+
+(defun fingertip-after-open-single-quote-p (current-node)
+  (not (string= (buffer-substring-no-properties (treesit-node-start current-node)
+                                                (treesit-node-end current-node))
+                (thing-at-point 'string t))))
 
 (defun fingertip-kill-line-in-string ()
   (cond ((save-excursion
