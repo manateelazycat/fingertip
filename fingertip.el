@@ -618,7 +618,7 @@ When in comment, kill to the beginning of the line."
   (delete-char 1))
 
 (defun fingertip-forward-movein-string ()
-  (cond ((and (eq (fingertip-node-type-at-point) 'raw_string_literal)
+  (cond ((and (string= (fingertip-node-type-at-point) "raw_string_literal")
               (eq (char-after) ?`))
          (forward-char 1))
         (t
@@ -1003,14 +1003,6 @@ When in comment, kill to the beginning of the line."
 (defun fingertip-current-node-range ()
   (fingertip-node-range (treesit-node-at (point))))
 
-(defun fingertip-kill-parent-node ()
-  (let ((range (fingertip-node-range (treesit-node-parent (treesit-node-at (point))))))
-    (fingertip-delete-region (car range) (cdr range))))
-
-(defun fingertip-kill-grandfather-node ()
-  (let ((range (fingertip-node-range (treesit-node-parent (treesit-node-parent (treesit-node-at (point)))))))
-    (fingertip-delete-region (car range) (cdr range))))
-
 (defun fingertip-kill-prepend-space ()
   (fingertip-delete-region (save-excursion
                              (search-backward-regexp "[^ \t\n]" nil t)
@@ -1021,7 +1013,7 @@ When in comment, kill to the beginning of the line."
 (defun fingertip-at-tag-right (tag)
   (save-excursion
     (backward-char 1)
-    (eq (fingertip-node-type-at-point) tag)))
+    (string= (fingertip-node-type-at-point) tag)))
 
 (defun fingertip-web-mode-kill ()
   "It's a smarter kill function for `web-mode'."
@@ -1029,66 +1021,45 @@ When in comment, kill to the beginning of the line."
       (fingertip-kill-blank-line-and-reindent)
     (cond
      ;; Kill from current point to attribute end position.
-     ((eq (fingertip-node-type-at-point) 'attribute_value)
+     ((string= (fingertip-node-type-at-point) "attribute_value")
       (fingertip-delete-region (point) (treesit-node-end (treesit-node-at (point)))))
 
      ;; Kill parent node if cursor at attribute or directive node.
-     ((or (eq (fingertip-node-type-at-point) 'attribute_name)
-          (eq (fingertip-node-type-at-point) 'directive_name))
-      (fingertip-kill-parent-node))
+     ((or (string= (fingertip-node-type-at-point) "attribute_name")
+          (string= (fingertip-node-type-at-point) "directive_name"))
+      (fingertip-web-mode-kill-parent-node))
 
      ;; Jump to next non-blank char if in tag area.
-     ((eq (fingertip-node-type-at-point) 'self_closing_tag)
+     ((string= (fingertip-node-type-at-point) "self_closing_tag")
       (search-forward-regexp "\\s-+"))
 
      ;; Clean blank spaces before close tag.
      ((string-equal (fingertip-node-type-at-point) "/>")
-      (cond ((looking-back "\\s-" nil)
-             (fingertip-kill-prepend-space))
-            ;; Kill tag if nothing in tag area.
-            ((fingertip-at-tag-right 'tag_name)
-             (backward-char 1)
-             (fingertip-kill-parent-node))
-            (t
-             (message "Nothing to kill in tag. ;)"))))
+      (fingertip-web-mode-clean-spaces-before-tag nil))
 
      ;; Clean blank spaces before start tag.
      ((string-equal (fingertip-node-type-at-point) ">")
-      (cond ((looking-back "\\s-" nil)
-             (fingertip-kill-prepend-space))
-            ;; Kill tag content if nothing in tag area.
-            ((fingertip-at-tag-right 'tag_name)
-             (backward-char 1)
-             (fingertip-kill-grandfather-node))
-            (t
-             (message "Nothing to kill in tag. ;)"))))
+      (fingertip-web-mode-clean-spaces-before-tag t))
 
      ;; Clean blank space before </
      ((string-equal (fingertip-node-type-at-point) "</")
-      (cond ((looking-back "\\s-" nil)
-             (fingertip-kill-prepend-space))
-            ;; Kill tag content if nothing in tag area.
-            ((fingertip-at-tag-right ">")
-             (backward-char 1)
-             (fingertip-kill-grandfather-node))
-            (t
-             (message "Nothing to kill in tag. ;)"))))
+      (fingertip-web-mode-clean-spaces-before-tag t))
 
      ;; Kill all tag content if cursor in tag start area.
-     ((eq (fingertip-node-type-at-point) 'tag_name)
-      (fingertip-kill-parent-node))
+     ((string= (fingertip-node-type-at-point) "tag_name")
+      (fingertip-web-mode-kill-parent-node))
 
      ;; Kill tag content if cursor at left of <
      ((string-equal (fingertip-node-type-at-point) "<")
-      (fingertip-kill-grandfather-node))
+      (fingertip-web-mode-kill-grandfather-node))
 
      ;; Kill string if cursor at start of quote.
      ((string-equal (fingertip-node-type-at-point) "\"")
       (forward-char 1)
-      (fingertip-kill-parent-node))
+      (fingertip-web-mode-kill-parent-node))
 
      ;; Kill content if in start_tag area.
-     ((eq (fingertip-node-type-at-point) 'start_tag)
+     ((string= (fingertip-node-type-at-point) "start_tag")
       (cond ((looking-at "\\s-")
              (search-forward-regexp "\\s-+"))
             ((save-excursion
@@ -1100,13 +1071,33 @@ When in comment, kill to the beginning of the line."
      ;; JavaScript string not identify by `treesit'
      ;; We need use `fingertip-current-parse-state' test cursor
      ;; whether in string.
-     ((and (eq (fingertip-node-type-at-point) 'raw_text)
+     ((and (string= (fingertip-node-type-at-point) "raw_text")
            (save-excursion (nth 3 (fingertip-current-parse-state))))
       (fingertip-js-mode-kill-rest-string))
 
      ;; Use common kill at last.
      (t
       (fingertip-common-mode-kill)))))
+
+(defun fingertip-web-mode-clean-spaces-before-tag (kill-grandfather-node)
+  (cond ((looking-back "\\s-" nil)
+         (fingertip-kill-prepend-space))
+        ;; Kill tag if nothing in tag area.
+        ((fingertip-at-tag-right "tag_name")
+         (backward-char 1)
+         (if kill-grandfather-node
+             (fingertip-web-mode-kill-grandfather-node)
+           (fingertip-web-mode-kill-parent-node)))
+        (t
+         (message "Nothing to kill in tag. ;)"))))
+
+(defun fingertip-web-mode-kill-parent-node ()
+  (let ((range (fingertip-node-range (treesit-node-parent (treesit-node-at (point))))))
+    (fingertip-delete-region (car range) (cdr range))))
+
+(defun fingertip-web-mode-kill-grandfather-node ()
+  (let ((range (fingertip-node-range (treesit-node-parent (treesit-node-parent (treesit-node-at (point)))))))
+    (fingertip-delete-region (car range) (cdr range))))
 
 (defun fingertip-web-mode-backward-kill ()
   (message "Backward kill in web-mode is currently not implemented."))
@@ -1123,16 +1114,16 @@ When in comment, kill to the beginning of the line."
   (interactive)
   (cond
    ((derived-mode-p 'web-mode)
-    (cond ((or (eq (fingertip-node-type-at-point) 'attribute_value)
-               (eq (fingertip-node-type-at-point) 'raw_text)
-               (eq (fingertip-node-type-at-point) 'text))
+    (cond ((or (string= (fingertip-node-type-at-point) "attribute_value")
+               (string= (fingertip-node-type-at-point) "raw_text")
+               (string= (fingertip-node-type-at-point) "text"))
            (insert "="))
           ;; Insert equal and double quotes if in tag attribute area.
           ((and (string-equal (file-name-extension (buffer-file-name)) "vue")
                 (fingertip-vue-in-template-area-p)
-                (or (eq (fingertip-node-type-at-point) 'directive_name)
-                    (eq (fingertip-node-type-at-point) 'attribute_name)
-                    (eq (fingertip-node-type-at-point) 'start_tag)))
+                (or (string= (fingertip-node-type-at-point) "directive_name")
+                    (string= (fingertip-node-type-at-point) "attribute_name")
+                    (string= (fingertip-node-type-at-point) "start_tag")))
            (insert "=\"\"")
            (backward-char 1))
           (t
@@ -1351,15 +1342,15 @@ A and B are strings."
   (and (not (fingertip-in-string-p))
        (not (fingertip-in-empty-string-p))
        (or (string-equal (fingertip-node-type-at-point) "\"")
-           (eq (fingertip-node-type-at-point) 'raw_string_literal))))
+           (string= (fingertip-node-type-at-point) "raw_string_literal"))))
 
 (defun fingertip-in-comment-p ()
-  (or (eq (fingertip-node-type-at-point) 'comment)
+  (or (string= (fingertip-node-type-at-point) "comment")
       (and (eolp)
            (ignore-errors
              (save-excursion
                (backward-char 1)
-               (eq (fingertip-node-type-at-point) 'comment))))
+               (string= (fingertip-node-type-at-point) "comment"))))
       (nth 4 (fingertip-current-parse-state))))
 
 (defun fingertip-in-char-p (&optional argument)
