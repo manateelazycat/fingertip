@@ -705,28 +705,34 @@ When in comment, kill to the beginning of the line."
       (delete-char 1))))
 
 (defun fingertip-unwrap-string (argument)
-  (let ((original-point (point))
-        (start+end (fingertip-current-node-range)))
-    (let ((start (car start+end))
-          (end (1- (cdr start+end))))
-      (let* ((escaped-string
-              (cond ((not (consp argument))
-                     (buffer-substring (1+ start) end))
-                    ((= 4 (car argument))
-                     (buffer-substring original-point end))
-                    (t
-                     (buffer-substring (1+ start) original-point))))
-             (unescaped-string
-              (fingertip-unescape-string escaped-string)))
-        (if (not unescaped-string)
-            (error "Unspliceable string.")
-          (save-excursion
-            (goto-char start)
-            (fingertip-delete-region start (1+ end))
-            (insert unescaped-string))
-          (if (not (and (consp argument)
-                        (= 4 (car argument))))
-              (goto-char (- original-point 1))))))))
+  (let* ((original-point (point))
+         (start+end (fingertip-current-node-range))
+         (start (car start+end))
+         (end (1- (cdr start+end)))
+         (escaped-string (fingertip-escaped-string argument start end original-point))
+         (unescaped-string (fingertip-unescape-string escaped-string)))
+    (when unescaped-string
+      (fingertip-delete-and-insert start end unescaped-string)
+      (fingertip-move-cursor original-point argument))))
+
+(defun fingertip-escaped-string (argument start end original-point)
+  (cond
+   ((not (consp argument))
+    (buffer-substring (1+ start) end))
+   ((= 4 (car argument))
+    (buffer-substring original-point end))
+   (t
+    (buffer-substring (1+ start) original-point))))
+
+(defun fingertip-delete-and-insert (start end unescaped-string)
+  (save-excursion
+    (goto-char start)
+    (fingertip-delete-region start (1+ end))
+    (insert unescaped-string)))
+
+(defun fingertip-move-cursor (original-point argument)
+  (unless (and (consp argument) (= 4 (car argument)))
+    (goto-char (- original-point 1))))
 
 (defun fingertip-point-at-sexp-start ()
   (save-excursion
