@@ -827,24 +827,28 @@ When in comment, kill to the beginning of the line."
              ))))
 
 (defun fingertip-kill-after-in-string ()
-  (if (let ((current-node (treesit-node-at (point))))
-        (and (fingertip-is-string-node-p current-node)
-             (> (point) (treesit-node-start current-node))))
-      (let* ((parent-bound-info (fingertip-get-parent-bound-info))
-             (current-node (nth 0 parent-bound-info))
-             (current-node-bound-end (treesit-node-text (save-excursion
-                                                          (goto-char (treesit-node-end current-node))
-                                                          (backward-char 1)
-                                                          (treesit-node-at (point))))))
-        (cond ((fingertip-at-raw-string-begin-p)
-               (fingertip-delete-region (treesit-node-start current-node) (treesit-node-end current-node)))
-              ((string-equal current-node-bound-end "'''")
-               (fingertip-delete-region (point) (- (treesit-node-end current-node) (length current-node-bound-end))))
-              ((fingertip-after-open-single-quote-p current-node)
-               (fingertip-kill-line-in-string))
-              (t
-               (fingertip-delete-region (point) (- (treesit-node-end current-node) 1)))))
-    (fingertip-kill-line-in-string)))
+  (cond ((or (derived-mode-p 'python-mode)
+             (derived-mode-p 'python-ts-mode))
+         (fingertip-kill-line-in-string))
+        (t
+         (if (let ((current-node (treesit-node-at (point))))
+               (and (fingertip-is-string-node-p current-node)
+                    (> (point) (treesit-node-start current-node))))
+             (let* ((parent-bound-info (fingertip-get-parent-bound-info))
+                    (current-node (nth 0 parent-bound-info))
+                    (current-node-bound-end (treesit-node-text (save-excursion
+                                                                 (goto-char (treesit-node-end current-node))
+                                                                 (backward-char 1)
+                                                                 (treesit-node-at (point))))))
+               (cond ((fingertip-at-raw-string-begin-p)
+                      (fingertip-delete-region (treesit-node-start current-node) (treesit-node-end current-node)))
+                     ((string-equal current-node-bound-end "'''")
+                      (fingertip-delete-region (point) (- (treesit-node-end current-node) (length current-node-bound-end))))
+                     ((fingertip-after-open-single-quote-p current-node)
+                      (fingertip-kill-line-in-string))
+                     (t
+                      (fingertip-delete-region (point) (- (treesit-node-end current-node) 1)))))
+           (fingertip-kill-line-in-string)))))
 
 (defun fingertip-after-open-single-quote-p (current-node)
   (not (string= (buffer-substring-no-properties (treesit-node-start current-node)
@@ -857,16 +861,10 @@ When in comment, kill to the beginning of the line."
            (eolp))
          (kill-line))
         (t
-         (save-excursion
-           (if (fingertip-in-string-escape-p)
-               (backward-char))
-           (let ((beginning (point)))
-             (while (save-excursion
-                      (forward-char)
-                      (fingertip-in-string-p))
-               (forward-char))
-             (kill-region beginning (point)))
-           ))))
+         (kill-region (point) (save-excursion
+                                (end-of-thing 'string)
+                                (backward-char)
+                                (point))))))
 
 (defun fingertip-in-string-escape-p ()
   (let ((oddp nil))
@@ -925,7 +923,6 @@ When in comment, kill to the beginning of the line."
                                  bol
                                (point))
                              begin-point)))
-
 (defun fingertip-forward-sexps-to-kill (beginning eol)
   (let ((end-of-list-p nil)
         (firstp t))
