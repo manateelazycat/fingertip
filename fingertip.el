@@ -1306,7 +1306,8 @@ A and B are strings."
    (ignore-errors
      (let ((current-node (treesit-node-at (point))))
        (and (fingertip-is-string-node-p current-node)
-            (> (point) (treesit-node-start current-node)))))
+            (> (point) (treesit-node-start current-node))
+            (> (point) (end-of-thing 'string)))))
 
    (nth 3 (fingertip-current-parse-state))
 
