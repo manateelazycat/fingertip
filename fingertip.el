@@ -967,6 +967,15 @@ When in comment, kill to the beginning of the line."
         (setq lastp nil)))
     beg-of-list-p))
 
+(defun fingertip-find-parent-node-match (node-types)
+  (treesit-parent-until
+   (treesit-node-at (point))
+   (lambda (parent)
+     (member (treesit-node-type parent) node-types))))
+
+(defun fingertip-in-argument-list-p ()
+  (fingertip-find-parent-node-match '("argument_list" "arguments" "tuple" "tuple_pattern" "pair" "dictionary" "list")))
+
 (defun fingertip-common-mode-kill ()
   (cond ((fingertip-is-blank-line-p)
          (fingertip-kill-blank-line-and-reindent))
@@ -982,7 +991,13 @@ When in comment, kill to the beginning of the line."
                (or (eq (char-after) ?\; )
                    (eolp))))
          (kill-line))
-        (t (fingertip-kill-sexps-on-line))))
+        ((fingertip-in-argument-list-p)
+         (fingertip-kill-parameters-after-point))
+	    (t (fingertip-kill-sexps-on-line))))
+
+(defun fingertip-kill-parameters-after-point ()
+  (kill-region (point) (save-excursion
+                         (1- (treesit-node-end (treesit-node-parent (treesit-node-at (point))))))))
 
 (defun fingertip-common-mode-backward-kill ()
   (if (fingertip-is-blank-line-p)
