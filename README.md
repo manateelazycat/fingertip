@@ -39,12 +39,16 @@ You can add fingertip.el to the programming language mode like below:
                'ruby-mode-hook
                'coffee-mode-hook
                'rust-mode-hook
+               'rust-ts-mode-hook
                'qmake-mode-hook
                'lua-mode-hook
                'swift-mode-hook
-               'minibuffer-inactive-mode-hook
+               'web-mode-hook
+               'markdown-mode-hook
+               'llvm-mode-hook
+               'conf-toml-mode-hook
+               'nim-mode-hook
                'typescript-mode-hook
-               
                'c-ts-mode-hook
                'c++-ts-mode-hook
                'cmake-ts-mode-hook
@@ -56,7 +60,7 @@ You can add fingertip.el to the programming language mode like below:
                'bash-ts-mode-hook
                'typescript-ts-mode-hook
                ))
-  (add-hook hook '(lambda () (fingertip-mode 1))))
+  (add-hook hook #'(lambda () (fingertip-mode 1))))
 ```
 
 Then binding below fingertip.el commands with below keystrokes:
