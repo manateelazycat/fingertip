@@ -991,13 +991,19 @@ When in comment, kill to the beginning of the line."
                (or (eq (char-after) ?\; )
                    (eolp))))
          (kill-line))
-        ;; ((fingertip-in-argument-list-p)
-        ;;  (fingertip-kill-parameters-after-point))
+        ((fingertip-in-argument-list-p)
+         (fingertip-kill-parameters-after-point))
 	    (t (fingertip-kill-sexps-on-line))))
 
 (defun fingertip-kill-parameters-after-point ()
-  (kill-region (point) (save-excursion
-                         (1- (treesit-node-end (treesit-node-parent (treesit-node-at (point))))))))
+  (let ((parent-node-end (save-excursion
+                           (treesit-node-end (treesit-node-parent (treesit-node-at (point)))))))
+    (kill-region (point)
+                 (if (member (treesit-node-type (treesit-node-at (point))) '("(" "[" "{"))
+                     ;; Delete all list if current node match open bracket.
+                     parent-node-end
+                   ;; Delete rest parameters in list if cursor in bracket.
+                   (1- parent-node-end)))))
 
 (defun fingertip-common-mode-backward-kill ()
   (if (fingertip-is-blank-line-p)
