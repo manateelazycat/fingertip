@@ -991,9 +991,9 @@ When in comment, kill to the beginning of the line."
                (or (eq (char-after) ?\; )
                    (eolp))))
          (kill-line))
-        ((and (fingertip-in-argument-list-p)
-              (not (fingertip-is-lisp-mode-p)))
-         (fingertip-kill-parameters-after-point))
+        ;; ((and (fingertip-in-argument-list-p)
+        ;;       (not (fingertip-is-lisp-mode-p)))
+        ;;  (fingertip-kill-parameters-after-point))
 	    (t (fingertip-kill-sexps-on-line))))
 
 (defun fingertip-kill-parameters-after-point ()
