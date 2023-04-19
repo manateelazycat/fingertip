@@ -889,41 +889,47 @@ When in comment, kill to the beginning of the line."
 
 (defun fingertip-kill-sexps-on-line ()
   "Kill forward sexp on the current line."
-  (condition-case nil
-      (progn
-        (when (fingertip-in-char-p)
-          (backward-char 2))
-        (let* ((begin-point (point))
-               (eol (line-end-position))
-               (end-of-list-p (fingertip-forward-sexps-to-kill begin-point eol)))
-          (when end-of-list-p
-            (up-list)
-            (backward-char))
-          (goto-char (if (and (not end-of-list-p) (eq (line-end-position) eol))
-                         eol
-                       (point)))
-          ;; NOTE: Back to previous line if point is at the beginning of line.
-          (when (bolp)
-            (backward-char 1))
-          (fingertip-delete-region begin-point (point))))
-    ;; Delete rest content of line when kill sexp throw `scan-error' error.
-    (scan-error (fingertip-delete-region (point) (point-at-eol)))))
+  (catch 'return
+    (condition-case nil
+        (progn
+          (when (fingertip-in-char-p)
+            (backward-char 2))
+          (let* ((begin-point (point))
+                 (eol (line-end-position))
+                 (end-of-list-p (fingertip-end-of-list-p begin-point eol)))
+            ;; When `end-of-list-p' is nil.
+            ;; We need call `fingertip-match-paren' then check open parentheses point,
+            ;; if open parentheses line is bigger than line of `begin-point',
+            ;; just kill current line, not continue.
+            (unless end-of-list-p
+              (when (save-excursion
+                      (fingertip-match-paren nil)
+                      (> (save-excursion
+                           (line-number-at-pos))
+                         (save-excursion
+                           (goto-char begin-point)
+                           (line-number-at-pos))))
+                (goto-char begin-point)
+                (fingertip-delete-region begin-point eol)
+                (throw 'return nil)))
 
-(defun fingertip-kill-sexps-backward-on-line ()
-  "Kill backward sexp on the current line."
-  (when (fingertip-in-char-p)
-    (forward-char 1))
-  (let* ((begin-point (point))
-         (bol (line-beginning-position))
-         (beg-of-list-p (fingertip-backward-sexps-to-kill begin-point bol)))
-    (when beg-of-list-p
-      (up-list -1)
-      (forward-char))
-    (fingertip-delete-region (if (and (not beg-of-list-p) (eq (line-beginning-position) bol))
-                                 bol
-                               (point))
-                             begin-point)))
-(defun fingertip-forward-sexps-to-kill (beginning eol)
+            (when end-of-list-p
+              (up-list)
+              (backward-char))
+
+            (when (and (not end-of-list-p)
+                       (eq (line-end-position) eol))
+              (goto-char eol))
+
+            ;; NOTE: Back to previous line if point is at the beginning of line.
+            (when (bolp)
+              (backward-char 1))
+            (fingertip-delete-region begin-point (point))
+            ))
+      ;; Delete rest content of line when kill sexp throw `scan-error' error.
+      (scan-error (fingertip-delete-region (point) (point-at-eol))))))
+
+(defun fingertip-end-of-list-p (beginning eol)
   (let ((end-of-list-p nil)
         (firstp t))
     (catch 'return
@@ -944,6 +950,21 @@ When in comment, kill to the beginning of the line."
             (throw 'return nil))
         (setq firstp nil)))
     end-of-list-p))
+
+(defun fingertip-kill-sexps-backward-on-line ()
+  "Kill backward sexp on the current line."
+  (when (fingertip-in-char-p)
+    (forward-char 1))
+  (let* ((begin-point (point))
+         (bol (line-beginning-position))
+         (beg-of-list-p (fingertip-backward-sexps-to-kill begin-point bol)))
+    (when beg-of-list-p
+      (up-list -1)
+      (forward-char))
+    (fingertip-delete-region (if (and (not beg-of-list-p) (eq (line-beginning-position) bol))
+                                 bol
+                               (point))
+                             begin-point)))
 
 (defun fingertip-backward-sexps-to-kill (beginning bol)
   (let ((beg-of-list-p nil)
