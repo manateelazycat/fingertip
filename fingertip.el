@@ -889,45 +889,42 @@ When in comment, kill to the beginning of the line."
 
 (defun fingertip-kill-sexps-on-line ()
   "Kill forward sexp on the current line."
-  (catch 'return
-    (condition-case nil
-        (progn
-          (when (fingertip-in-char-p)
-            (backward-char 2))
-          (let* ((begin-point (point))
-                 (eol (line-end-position))
-                 (end-of-list-p (fingertip-end-of-list-p begin-point eol)))
-            ;; When `end-of-list-p' is nil.
-            ;; We need call `fingertip-match-paren' then check open parentheses point,
-            ;; if open parentheses line is bigger than line of `begin-point',
-            ;; just kill current line, not continue.
-            (unless end-of-list-p
-              (when (save-excursion
-                      (fingertip-match-paren nil)
-                      (> (save-excursion
-                           (line-number-at-pos))
-                         (save-excursion
-                           (goto-char begin-point)
-                           (line-number-at-pos))))
-                (goto-char begin-point)
-                (fingertip-delete-region begin-point eol)
-                (throw 'return nil)))
+  (unless (ignore-errors
+            (when (fingertip-in-char-p)
+              (backward-char 2))
+            (let* ((begin-point (point))
+                   (eol (line-end-position))
+                   (end-of-list-p (fingertip-end-of-list-p begin-point eol)))
+              (if (and (not end-of-list-p)
+                       (save-excursion
+                         (fingertip-match-paren nil)
+                         (> (save-excursion
+                              (line-number-at-pos))
+                            (save-excursion
+                              (goto-char begin-point)
+                              (line-number-at-pos)))))
+                  ;; When `end-of-list-p' is nil.
+                  ;; We need call `fingertip-match-paren' then check open parentheses point,
+                  ;; if open parentheses line is bigger than line of `begin-point',
+                  ;; just kill current line, not continue.
+                  (progn
+                    (goto-char begin-point)
+                    (fingertip-delete-region begin-point eol))
 
-            (when end-of-list-p
-              (up-list)
-              (backward-char))
+                (when end-of-list-p
+                  (up-list)
+                  (backward-char))
 
-            (when (and (not end-of-list-p)
-                       (eq (line-end-position) eol))
-              (goto-char eol))
+                (when (and (not end-of-list-p)
+                           (eq (line-end-position) eol))
+                  (goto-char eol))
 
-            ;; NOTE: Back to previous line if point is at the beginning of line.
-            (when (bolp)
-              (backward-char 1))
-            (fingertip-delete-region begin-point (point))
-            ))
-      ;; Delete rest content of line when kill sexp throw `scan-error' error.
-      (scan-error (fingertip-delete-region (point) (point-at-eol))))))
+                ;; NOTE: Back to previous line if point is at the beginning of line.
+                (when (bolp)
+                  (backward-char 1))
+                (fingertip-delete-region begin-point (point)))))
+    ;; Delete rest content of line when kill sexp throw `scan-error' error.
+    (fingertip-delete-region (point) (point-at-eol))))
 
 (defun fingertip-end-of-list-p (beginning eol)
   (let ((end-of-list-p nil)
