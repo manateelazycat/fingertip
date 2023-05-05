@@ -1014,6 +1014,9 @@ When in comment, kill to the beginning of the line."
         ;; ((and (fingertip-in-argument-list-p)
         ;;       (not (fingertip-is-lisp-mode-p)))
         ;;  (fingertip-kill-parameters-after-point))
+        ((or (derived-mode-p 'c++-mode)
+             (derived-mode-p 'c++-ts-mode))
+         (kill-line))
 	    (t (fingertip-kill-sexps-on-line))))
 
 (defun fingertip-kill-parameters-after-point ()
