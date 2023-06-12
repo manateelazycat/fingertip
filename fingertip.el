@@ -1345,17 +1345,18 @@ A and B are strings."
   (ignore-errors (treesit-node-type (treesit-node-at (point)))))
 
 (defun fingertip-in-string-p ()
-  (or
-   ;; If node type is 'string, point must at right of string open quote.
-   (ignore-errors
-     (let ((current-node (treesit-node-at (point))))
-       (and (fingertip-is-string-node-p current-node)
-            (> (point) (treesit-node-start current-node))
-            )))
+  (save-excursion
+    (or
+     ;; If node type is 'string, point must at right of string open quote.
+     (ignore-errors
+       (let ((current-node (treesit-node-at (point))))
+         (and (fingertip-is-string-node-p current-node)
+              (> (point) (treesit-node-start current-node))
+              )))
 
-   (nth 3 (fingertip-current-parse-state))
+     (nth 3 (fingertip-current-parse-state))
 
-   (fingertip-before-string-close-quote-p)))
+     (fingertip-before-string-close-quote-p))))
 
 (defun fingertip-in-single-quote-string-p ()
   (ignore-errors
@@ -1381,22 +1382,25 @@ A and B are strings."
          (string-equal (fingertip-node-type-at-point) "\""))))
 
 (defun fingertip-before-string-open-quote-p ()
-  (and (not (fingertip-in-string-p))
-       (not (fingertip-in-empty-string-p))
-       (or (string-equal (fingertip-node-type-at-point) "\"")
-           (string= (fingertip-node-type-at-point) "raw_string_literal"))))
+  (save-excursion
+    (and (not (fingertip-in-string-p))
+         (not (fingertip-in-empty-string-p))
+         (or (string-equal (fingertip-node-type-at-point) "\"")
+             (string= (fingertip-node-type-at-point) "raw_string_literal")))))
 
 (defun fingertip-in-comment-p ()
-  (or
-   ;; Elisp parser has bug, node type is comment even current line is empty line.
-   (and (not (string-empty-p (string-trim (buffer-substring (line-beginning-position) (line-end-position)))))
-        (string= (fingertip-node-type-at-point) "comment"))
-   (nth 4 (fingertip-current-parse-state))))
+  (save-excursion
+    (or
+     ;; Elisp parser has bug, node type is comment even current line is empty line.
+     (and (not (string-empty-p (string-trim (buffer-substring (line-beginning-position) (line-end-position)))))
+          (string= (fingertip-node-type-at-point) "comment"))
+     (nth 4 (fingertip-current-parse-state)))))
 
 (defun fingertip-in-char-p (&optional argument)
-  (let ((argument (or argument (point))))
-    (and (eq (char-before argument) ?\\ )
-         (not (eq (char-before (1- argument)) ?\\ )))))
+  (save-excursion
+    (let ((argument (or argument (point))))
+      (and (eq (char-before argument) ?\\ )
+           (not (eq (char-before (1- argument)) ?\\ ))))))
 
 (defun fingertip-is-blank-line-p ()
   (save-excursion
@@ -1404,13 +1408,14 @@ A and B are strings."
     (looking-at "[[:space:]]*$")))
 
 (defun fingertip-only-whitespaces-before-cursor-p ()
-  (let ((string-before-cursor
-         (buffer-substring
-          (save-excursion
-            (beginning-of-line)
-            (point))
-          (point))))
-    (equal (length (string-trim string-before-cursor)) 0)))
+  (save-excursion
+    (let ((string-before-cursor
+           (buffer-substring
+            (save-excursion
+              (beginning-of-line)
+              (point))
+            (point))))
+      (equal (length (string-trim string-before-cursor)) 0))))
 
 (defun fingertip-newline (arg)
   (interactive "p")
