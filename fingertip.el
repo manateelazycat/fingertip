@@ -190,19 +190,39 @@
   (cond ((or (fingertip-is-lisp-mode-p)
              (derived-mode-p 'markdown-mode)
              (derived-mode-p 'rust-mode)
-             (derived-mode-p 'python-mode)
-             (derived-mode-p 'python-ts-mode)
              (fingertip-in-comment-p)
              (and (boundp 'acm-enable-search-sdcv-words)
                   acm-enable-search-sdcv-words))
          (insert "'"))
         ((region-active-p)
          (fingertip-wrap-single-quote))
+        ((or (derived-mode-p 'python-mode)
+             (derived-mode-p 'python-ts-mode))
+         (if (string-equal (fingertip-get-non-space-string-before-point) "''")
+             ;; Become '''''' if string before cursor is ''.
+             (progn
+               (insert "''''")
+               (backward-char 3))
+           ;; Otherwise insert ''.
+           (insert "''")
+           (backward-char)))
         ((fingertip-in-string-p)
          (insert "'"))
         (t
          (insert "''")
          (backward-char))))
+
+(defun fingertip-get-non-space-string-before-point ()
+  (interactive)
+  (save-excursion
+    (let (start end)
+      (skip-chars-backward " \t")
+      (setq end (point))
+      (skip-chars-backward "^ \t\n")
+      (setq start (point))
+      (if (< start end)
+          (buffer-substring-no-properties start end)
+        nil))))
 
 (defun fingertip-double-quote ()
   (interactive)
