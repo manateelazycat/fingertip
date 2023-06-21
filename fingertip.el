@@ -280,7 +280,7 @@ output: [ | ]
          (sgml-skip-tag-forward 1))
         ((looking-back ">" nil)
          (sgml-skip-tag-backward 1))
-        (t (self-insert-command (or arg 1)))))
+        (t (self-insert-command 1))))
 
 (defun fingertip-backward-delete ()
   (interactive)
