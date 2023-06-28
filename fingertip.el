@@ -190,6 +190,7 @@
   (cond ((or (fingertip-is-lisp-mode-p)
              (derived-mode-p 'markdown-mode)
              (derived-mode-p 'rust-mode)
+             (derived-mode-p 'rust-ts-mode)
              (fingertip-in-comment-p)
              (and (boundp 'acm-enable-search-sdcv-words)
                   acm-enable-search-sdcv-words))
