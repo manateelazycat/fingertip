@@ -74,6 +74,13 @@ Then binding below fingertip.el commands with below keystrokes:
 (define-key fingertip-mode-map (kbd "}") 'fingertip-close-curly)
 (define-key fingertip-mode-map (kbd "=") 'fingertip-equal)
 
+(define-key fingertip-mode-map (kbd "（") 'fingertip-open-chinese-round)
+(define-key fingertip-mode-map (kbd "「") 'fingertip-open-chinese-bracket)
+(define-key fingertip-mode-map (kbd "【") 'fingertip-open-chinese-curly)
+(define-key fingertip-mode-map (kbd "）") 'fingertip-close-chinese-round)
+(define-key fingertip-mode-map (kbd "」") 'fingertip-close-chinese-bracket)
+(define-key fingertip-mode-map (kbd "】") 'fingertip-close-chinese-curly)
+
 (define-key fingertip-mode-map (kbd "%") 'fingertip-match-paren)
 (define-key fingertip-mode-map (kbd "\"") 'fingertip-double-quote)
 (define-key fingertip-mode-map (kbd "'") 'fingertip-single-quote)

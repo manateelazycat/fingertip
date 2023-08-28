@@ -144,6 +144,18 @@
   (interactive)
   (fingertip-open-object "[" "]"))
 
+(defun fingertip-open-chinese-round ()
+  (interactive)
+  (fingertip-open-object "（" "）"))
+
+(defun fingertip-open-chinese-curly ()
+  (interactive)
+  (fingertip-open-object "【" "】"))
+
+(defun fingertip-open-chinese-bracket ()
+  (interactive)
+  (fingertip-open-object "「" "」"))
+
 (defun fingertip-fix-unbalanced-parentheses ()
   (interactive)
   (let ((close (fingertip-missing-close)))
@@ -153,7 +165,13 @@
               ((eq ?\} (matching-paren close))
                (insert "}"))
               ((eq ?\] (matching-paren close))
-               (insert "]")))
+               (insert "]"))
+              ((eq ?\） (matching-paren close))
+               (insert "）"))
+              ((eq ?\】 (matching-paren close))
+               (insert "】"))
+              ((eq ?\」 (matching-paren close))
+               (insert "」")))
       (up-list))))
 
 (defun fingertip-close-round ()
@@ -182,6 +200,35 @@
   (cond ((or (fingertip-in-string-p)
              (fingertip-in-comment-p))
          (insert "]"))
+        (t
+         (fingertip-fix-unbalanced-parentheses))))
+
+(defun fingertip-close-chinese-round ()
+  (interactive)
+  (cond ((or (fingertip-in-string-p)
+             (fingertip-in-comment-p))
+         (insert "）"))
+        ;; Insert ) directly in sh-mode for case ... in syntax.
+        ((or
+          (derived-mode-p 'sh-mode)
+          (derived-mode-p 'markdown-mode))
+         (insert "）"))
+        (t
+         (fingertip-fix-unbalanced-parentheses))))
+
+(defun fingertip-close-chinese-curly ()
+  (interactive)
+  (cond ((or (fingertip-in-string-p)
+             (fingertip-in-comment-p))
+         (insert "】"))
+        (t
+         (fingertip-fix-unbalanced-parentheses))))
+
+(defun fingertip-close-chinese-bracket ()
+  (interactive)
+  (cond ((or (fingertip-in-string-p)
+             (fingertip-in-comment-p))
+         (insert "」"))
         (t
          (fingertip-fix-unbalanced-parentheses))))
 
