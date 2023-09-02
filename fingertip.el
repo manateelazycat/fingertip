@@ -1061,28 +1061,62 @@ When in comment, kill to the beginning of the line."
 (defun fingertip-in-argument-list-p ()
   (fingertip-find-parent-node-match '("argument_list" "arguments" "tuple" "tuple_pattern" "pair" "dictionary" "list")))
 
+(defun fingertip-get-parenthesis-begin-pos (parenthesis-end-pos)
+  (save-excursion
+    (when parenthesis-end-pos
+      (goto-char parenthesis-end-pos)
+      (fingertip-match-paren 1)
+      (point)
+      )))
+
+(defun fingertip-get-parenthesis-end-pos ()
+  ;; We check every char after point, if it match ) ] }, and check match parenthesis.
+  ;; Return parenthesis end position if found it in current line.
+  (save-excursion
+    (let ((current-pos (point)))
+      (catch 'return
+        (while (not (eolp))
+          (forward-char)
+          (when (and (member (char-before) '(?\) ?\] ?\}))
+                     (member (treesit-node-type (treesit-node-at (point))) '(")" "]" "}"))
+                     (save-excursion
+                       (fingertip-match-paren 1)
+                       (when (member (treesit-node-type (treesit-node-at (point))) '("(" "[" "{"))
+                         (>= current-pos (point)))))
+            (throw 'return (point))
+            ))))))
+
 (defun fingertip-common-mode-kill ()
-  (cond ((fingertip-is-blank-line-p)
-         (fingertip-kill-blank-line-and-reindent))
-        (current-prefix-arg
-         (kill-line (if (integerp current-prefix-arg)
-                        current-prefix-arg
-                      1)))
-        ((fingertip-in-string-p)
-         (fingertip-kill-after-in-string))
-        ((or (fingertip-in-comment-p)
-             (save-excursion
-               (fingertip-skip-whitespace t (line-end-position))
-               (or (eq (char-after) ?\; )
-                   (eolp))))
-         (kill-line))
-        ;; ((and (fingertip-in-argument-list-p)
-        ;;       (not (fingertip-is-lisp-mode-p)))
-        ;;  (fingertip-kill-parameters-after-point))
-        ((or (derived-mode-p 'c++-mode)
-             (derived-mode-p 'c++-ts-mode))
-         (kill-line))
-	    (t (fingertip-kill-sexps-on-line))))
+  (cond
+   ;; Kill blank line.
+   ((fingertip-is-blank-line-p)
+    (fingertip-kill-blank-line-and-reindent))
+   ;; Kill line if current-prefix-arg is non-nil.
+   (current-prefix-arg
+    (kill-line (if (integerp current-prefix-arg)
+                   current-prefix-arg
+                 1)))
+   ;; Kill rest characters in string.
+   ((fingertip-in-string-p)
+    (fingertip-kill-after-in-string))
+   ;; Kill line in comment.
+   ((fingertip-in-comment-p)
+    (kill-line))
+   ;; Kill rest characters in parenthesis or sexp.
+   (t
+    (let* ((parenthesis-end-pos (fingertip-get-parenthesis-end-pos))
+           (parenthesis-begin-pos (fingertip-get-parenthesis-begin-pos parenthesis-end-pos)))
+      (cond (parenthesis-end-pos
+             (if (equal (point) parenthesis-begin-pos)
+                 ;; Kill parenthesis if current point is parenthesis begin.
+                 (kill-region parenthesis-begin-pos parenthesis-end-pos)
+               ;; Kill rest characters in parenthesis.
+               (kill-region (point) (- parenthesis-end-pos 1)))
+             ;; Try indent after kill action.
+             (indent-for-tab-command))
+            (t
+             ;; Otherwise try `fingertip-kill-sexps-on-line'.
+             (fingertip-kill-sexps-on-line)))))))
 
 (defun fingertip-kill-parameters-after-point ()
   (let ((parent-node-end (save-excursion
