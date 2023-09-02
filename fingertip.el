@@ -1544,18 +1544,8 @@ A and B are strings."
 
 (defun fingertip-jump-up ()
   (interactive)
-  (let* ((current-node (treesit-node-at (point)))
-         (parent-node (treesit-node-parent current-node)))
-    (if parent-node
-        (let ((parent-node-start-position (treesit-node-start parent-node)))
-          (if (equal parent-node-start-position (point))
-              (progn
-                (backward-char)
-                (fingertip-jump-up))
-            (goto-char parent-node-start-position)
-            (scroll-down 3)))
-      (fingertip-jump-left)
-      (back-to-indentation))))
+  (ignore-errors
+    (treesit-beginning-of-defun)))
 
 ;; Integrate with eldoc
 (with-eval-after-load 'eldoc
