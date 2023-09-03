@@ -561,11 +561,14 @@ When in comment, kill to the beginning of the line."
            (if (fingertip-is-blank-line-p)
                (fingertip-kill-current-line))))))
 
+(defun fingertip-node-text (node)
+  (treesit-node-text node t))
+
 (defun fingertip-jump-left ()
   (interactive)
   (let* ((current-node (treesit-node-at (point)))
          (prev-node (treesit-node-prev-sibling current-node))
-         (current-node-text (treesit-node-text current-node))
+         (current-node-text (fingertip-node-text current-node))
          (current-point (point)))
     (cond
      ;; Skip blank space.
@@ -602,7 +605,7 @@ When in comment, kill to the beginning of the line."
   (interactive)
   (let* ((current-node (treesit-node-at (point)))
          (next-node (treesit-node-next-sibling current-node))
-         (current-node-text (treesit-node-text current-node))
+         (current-node-text (fingertip-node-text current-node))
          (current-point (point)))
     (cond
      ;; Skip blank space.
@@ -687,7 +690,7 @@ When in comment, kill to the beginning of the line."
               (eq (char-after) ?`))
          (forward-char 1))
         (t
-         (forward-char (length (treesit-node-text (treesit-node-at (point))))))))
+         (forward-char (length (fingertip-node-text (treesit-node-at (point))))))))
 
 (defun fingertip-is-string-node-p (current-node)
   (or (eq (treesit-node-type current-node) 'string)
@@ -699,7 +702,7 @@ When in comment, kill to the beginning of the line."
 (defun fingertip-in-empty-backquote-string-p ()
   (let ((current-node (treesit-node-at (point))))
     (and (fingertip-is-string-node-p current-node)
-         (string-equal (treesit-node-text current-node) "``")
+         (string-equal (fingertip-node-text current-node) "``")
          (eq (char-before) ?`)
          (eq (char-after) ?`)
          )))
@@ -707,13 +710,13 @@ When in comment, kill to the beginning of the line."
 (defun fingertip-get-parent-bound-info ()
   (let* ((current-node (treesit-node-at (point)))
          (parent-node (treesit-node-parent current-node))
-         (parent-bound-start (treesit-node-text (save-excursion
-                                                  (goto-char (treesit-node-start parent-node))
-                                                  (treesit-node-at (point)))))
-         (parent-bound-end (treesit-node-text (save-excursion
-                                                (goto-char (treesit-node-end parent-node))
-                                                (backward-char 1)
-                                                (treesit-node-at (point))))))
+         (parent-bound-start (fingertip-node-text (save-excursion
+                                                    (goto-char (treesit-node-start parent-node))
+                                                    (treesit-node-at (point)))))
+         (parent-bound-end (fingertip-node-text (save-excursion
+                                                  (goto-char (treesit-node-end parent-node))
+                                                  (backward-char 1)
+                                                  (treesit-node-at (point))))))
     (list current-node parent-node parent-bound-start parent-bound-end)))
 
 (defun fingertip-in-empty-string-p ()
@@ -723,9 +726,9 @@ When in comment, kill to the beginning of the line."
              (string-bound-start (nth 2 parent-bound-info))
              (string-bound-end (nth 3 parent-bound-info)))
         (and (fingertip-is-string-node-p current-node)
-             (= (length (treesit-node-text parent-node)) (+ (length string-bound-start) (length string-bound-end)))
+             (= (length (fingertip-node-text parent-node)) (+ (length string-bound-start) (length string-bound-end)))
              ))
-      (string-equal (treesit-node-text (treesit-node-at (point))) "\"\"")))
+      (string-equal (fingertip-node-text (treesit-node-at (point))) "\"\"")))
 
 (defun fingertip-backward-delete-in-string ()
   (cond
@@ -738,19 +741,19 @@ When in comment, kill to the beginning of the line."
    ((fingertip-after-open-quote-p)
     (backward-char (length (save-excursion
                              (backward-char 1)
-                             (treesit-node-text (treesit-node-at (point)))))))
+                             (fingertip-node-text (treesit-node-at (point)))))))
    ;; Delete previous character.
    (t
     (backward-delete-char 1))))
 
 (defun fingertip-delete-empty-string ()
-  (cond ((string-equal (treesit-node-text (treesit-node-at (point))) "\"\"")
+  (cond ((string-equal (fingertip-node-text (treesit-node-at (point))) "\"\"")
          (fingertip-delete-region (- (point) 1) (+ (point) 1)))
         (t
          (let* ((current-node (treesit-node-at (point)))
                 (node-bound-length (save-excursion
                                      (goto-char (treesit-node-start current-node))
-                                     (length (treesit-node-text (treesit-node-at (point)))))))
+                                     (length (fingertip-node-text (treesit-node-at (point)))))))
            (fingertip-delete-region (- (point) node-bound-length) (+ (point) node-bound-length))))))
 
 (defun fingertip-delete-empty-backquote-string ()
@@ -765,7 +768,7 @@ When in comment, kill to the beginning of the line."
   (let* ((current-node (treesit-node-at (point)))
          (node-bound-length (save-excursion
                               (goto-char (treesit-node-start current-node))
-                              (length (treesit-node-text (treesit-node-at (point)))))))
+                              (length (fingertip-node-text (treesit-node-at (point)))))))
     (unless (eq (point) (- (treesit-node-end current-node) node-bound-length))
       (delete-char 1))))
 
@@ -901,10 +904,10 @@ When in comment, kill to the beginning of the line."
                     (> (point) (treesit-node-start current-node))))
              (let* ((parent-bound-info (fingertip-get-parent-bound-info))
                     (current-node (nth 0 parent-bound-info))
-                    (current-node-bound-end (treesit-node-text (save-excursion
-                                                                 (goto-char (treesit-node-end current-node))
-                                                                 (backward-char 1)
-                                                                 (treesit-node-at (point))))))
+                    (current-node-bound-end (fingertip-node-text (save-excursion
+                                                                   (goto-char (treesit-node-end current-node))
+                                                                   (backward-char 1)
+                                                                   (treesit-node-at (point))))))
                (cond ((fingertip-at-raw-string-begin-p)
                       (fingertip-delete-region (treesit-node-start current-node) (treesit-node-end current-node)))
                      ((string-equal current-node-bound-end "'''")
@@ -1460,7 +1463,7 @@ A and B are strings."
 
 (defun fingertip-in-single-quote-string-p ()
   (ignore-errors
-    (let ((parent-node-text (treesit-node-text (treesit-node-parent (treesit-node-at (point))))))
+    (let ((parent-node-text (fingertip-node-text (treesit-node-parent (treesit-node-at (point))))))
       (and (fingertip-in-string-p)
            (> (length parent-node-text) 1)
            (string-equal (substring parent-node-text 0 1) "'")))))
@@ -1471,7 +1474,7 @@ A and B are strings."
      (= (point) (treesit-node-start current-node))
      (string-equal (treesit-node-type current-node) "\"")
      (save-excursion
-       (forward-char (length (treesit-node-text current-node)))
+       (forward-char (length (fingertip-node-text current-node)))
        (not (fingertip-is-string-node-p (treesit-node-at (point))))
        ))))
 
