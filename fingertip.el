@@ -1493,11 +1493,8 @@ A and B are strings."
 
 (defun fingertip-in-comment-p ()
   (save-excursion
-    (or
-     ;; Elisp parser has bug, node type is comment even current line is empty line.
-     (and (not (string-empty-p (string-trim (buffer-substring (line-beginning-position) (line-end-position)))))
-          (string= (fingertip-node-type-at-point) "comment"))
-     (nth 4 (fingertip-current-parse-state)))))
+    (and (nth 4 (fingertip-current-parse-state))
+         (string= (fingertip-node-type-at-point) "comment"))))
 
 (defun fingertip-in-char-p (&optional argument)
   (save-excursion
