@@ -1,4 +1,4 @@
-;;; fingertip.el --- Fingertip is struct edit plugin that base on treesit   -*- lexical-binding: t; -*-
+$;;; fingertip.el --- Fingertip is struct edit plugin that base on treesit   -*- lexical-binding: t; -*-
 
 ;; Filename: fingertip.el
 ;; Description: Fingertip is struct edit plugin that base on treesit
@@ -1367,7 +1367,20 @@ Just like `paredit-splice-sexp+' style."
           ((derived-mode-p 'web-mode)
            (fingertip-web-mode-match-paren))
           (t
-           (self-insert-command (or arg 1)))))))
+           (let ((node-type (fingertip-node-type-at-point)))
+             (pcase node-type
+               ("string_start" (treesit-search-forward-goto
+                                (treesit-node-at (point))
+                                (lambda (node)
+                                  (string= (treesit-node-type node) "string_end"))))
+               ("string_end" (treesit-search-forward-goto
+                              (treesit-node-at (point))
+                              (lambda (node)
+                                (string= (treesit-node-type node) "string_start"))
+                              t
+                              t))
+               (_ (self-insert-command (or arg 1)))))
+           )))))
 
 ;;;;;;;;;;;;;;;;; Utils functions ;;;;;;;;;;;;;;;;;;;;;;
 
