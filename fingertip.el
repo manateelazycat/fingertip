@@ -1,4 +1,4 @@
-$;;; fingertip.el --- Fingertip is struct edit plugin that base on treesit   -*- lexical-binding: t; -*-
+;;; fingertip.el --- Fingertip is struct edit plugin that base on treesit   -*- lexical-binding: t; -*-
 
 ;; Filename: fingertip.el
 ;; Description: Fingertip is struct edit plugin that base on treesit
