@@ -728,7 +728,7 @@ When in comment, kill to the beginning of the line."
              (string-bound-start (nth 2 parent-bound-info))
              (string-bound-end (nth 3 parent-bound-info)))
         (and (fingertip-is-string-node-p current-node)
-             (= (length (fingertip-node-text parent-node)) (+ (length string-bound-start) (length string-bound-end)))
+             (eq (length (fingertip-node-text parent-node)) (+ (length string-bound-start) (length string-bound-end)))
              ))
       (string-equal (fingertip-node-text (treesit-node-at (point))) "\"\"")))
 
@@ -789,7 +789,7 @@ When in comment, kill to the beginning of the line."
   (cond
    ((not (consp argument))
     (buffer-substring (1+ start) end))
-   ((= 4 (car argument))
+   ((eq 4 (car argument))
     (buffer-substring original-point end))
    (t
     (buffer-substring (1+ start) original-point))))
@@ -801,7 +801,7 @@ When in comment, kill to the beginning of the line."
     (insert unescaped-string)))
 
 (defun fingertip-move-cursor (original-point argument)
-  (unless (and (consp argument) (= 4 (car argument)))
+  (unless (and (consp argument) (eq 4 (car argument)))
     (goto-char (- original-point 1))))
 
 (defun fingertip-point-at-sexp-start ()
@@ -818,7 +818,7 @@ When in comment, kill to the beginning of the line."
 
 (defun fingertip-point-at-sexp-boundary (n)
   (cond ((< n 0) (fingertip-point-at-sexp-start))
-        ((= n 0) (point))
+        ((eq n 0) (point))
         ((> n 0) (fingertip-point-at-sexp-end))))
 
 (defun fingertip-kill-surrounding-sexps-for-splice (argument)
@@ -834,7 +834,7 @@ When in comment, kill to the beginning of the line."
            (fingertip-hack-kill-region saved (point))))
         ((consp argument)
          (let ((v (car argument)))
-           (if (= v 4)
+           (if (eq v 4)
                (let ((end (point)))
                  (ignore-errors
                    (while (not (bobp))
@@ -891,7 +891,7 @@ When in comment, kill to the beginning of the line."
 (defun fingertip-at-raw-string-begin-p ()
   (let ((current-node (treesit-node-at (point))))
     (and (fingertip-is-string-node-p current-node)
-         (= (point) (1+ (treesit-node-start current-node)))
+         (eq (point) (1+ (treesit-node-start current-node)))
          (or (eq (char-before) ?R)
              (eq (char-before) ?r)
              ))))
@@ -1486,7 +1486,7 @@ A and B are strings."
 (defun fingertip-before-string-close-quote-p ()
   (let ((current-node (treesit-node-at (point))))
     (and
-     (= (point) (treesit-node-start current-node))
+     (eq (point) (treesit-node-start current-node))
      (string-equal (treesit-node-type current-node) "\"")
      (save-excursion
        (forward-char (length (fingertip-node-text current-node)))
