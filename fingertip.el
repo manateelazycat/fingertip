@@ -1117,8 +1117,9 @@ When in comment, kill to the beginning of the line."
                  (kill-region parenthesis-begin-pos parenthesis-end-pos)
                ;; Kill rest characters in parenthesis.
                (kill-region (point) (- parenthesis-end-pos 1)))
-             ;; Try indent after kill action.
-             (indent-for-tab-command))
+             ;; Try indent after kill lisp parenthesis.
+             (when (fingertip-is-lisp-mode-p)
+               (indent-for-tab-command)))
             (t
              ;; Otherwise try `fingertip-kill-sexps-on-line'.
              (fingertip-kill-sexps-on-line)))))))
